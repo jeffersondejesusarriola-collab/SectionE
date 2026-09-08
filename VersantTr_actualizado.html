@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versant Simulation Test</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
+        /* ==========================================
+           1. CORE VARIABLES & TYPOGRAPHY
+           ========================================== */
+        :root {
+            --primary: #1a3668;
+            --secondary: #3b82f6;
+            --accent: #ef4444;
+            --bg-color: #e5e7eb;
+            --panel-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #6b7280;
+            --border-soft: #d1d5db;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+        }
+
+        /* ==========================================
+           2. ANIMATIONS & TRANSITIONS
+           ========================================== */
+        .screen { 
+            display: none; 
+            flex-direction: column; 
+            height: 100%; 
+            padding: 40px; 
+            box-sizing: border-box; 
+        }
+        
+        .active-screen { 
+            display: flex; 
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .animate-question {
+            animation: slideUpFade 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-listen {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        @keyframes pulse-record {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* ==========================================
+           3. MAIN LAYOUT & HEADER
+           ========================================== */
+        .app-container {
+            width: 950px;
+            background: var(--panel-bg);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 650px;
+            position: relative;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .top-bar-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title { 
+            font-size: 28px; 
+            font-weight: 700; 
+            color: var(--primary); 
+            margin: 0;
+        }
+        
+        .header-tag {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .school-logo {
+            height: 55px;
+            object-fit: contain;
+        }
+
+        .header-subtitle { 
+            font-size: 15px; 
+            color: var(--text-muted); 
+            margin-bottom: 30px; 
+        }
+
+        /* ==========================================
+           4. BUTTONS & UI ELEMENTS
+           ========================================== */
+        .btn {
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 14px 28px;
+            font-size: 16px; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            cursor: pointer;
+            transition: all 0.2s; 
+            align-self: flex-end; 
+            margin-top: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover { background-color: #112445; transform: translateY(-1px); }
+        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none;}
+
+        .btn-next-question {
+            display: none;
+            margin-top: 18px;
+            background: transparent;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: inherit;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-next-question:hover { background-color: var(--accent); color: white; }
+        .btn-next-question:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .instruction-box { 
+            background: #f8fafc; 
+            padding: 20px 25px; 
+            border-radius: 12px; 
+            border-left: 5px solid var(--primary); 
+            margin-bottom: 25px; 
+            font-size: 14px; 
+            line-height: 1.6;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+        .field-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text-main);
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* ==========================================
+           5. TEST CONTAINERS (VERSANT STYLE)
+           ========================================== */
+        .test-ui-box {
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            border: 1px solid #cbd5e1; 
+            border-radius: 24px;
+            padding: 35px;
+            display: flex; 
+            gap: 35px; 
+            min-height: 250px;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 4px 10px rgba(0,0,0,0.03);
+        }
+        
+        .test-col { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .test-label { 
+            font-weight: 700; 
+            color: #334155; 
+            margin-bottom: 12px; 
+            font-size: 15px;
+        }
+        
+        .interaction-area {
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 16px; 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02); 
+            position: relative; 
+            padding: 25px; 
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        /* ==========================================
+           6. ICONS & PROGRESS
+           ========================================== */
+        .icon-large { 
+            width: 55px; 
+            height: 55px; 
+            fill: #9ca3af; 
+            transition: all 0.3s; 
+            border-radius: 50%;
+            padding: 10px;
+        }
+        .icon-active-listen { 
+            fill: white; 
+            background-color: var(--secondary);
+            animation: pulse-listen 2s infinite; 
+        }
+        .icon-active-record { 
+            fill: white; 
+            background-color: var(--accent);
+            animation: pulse-record 2s infinite; 
+        }
+
+        .progress-container { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 10px; 
+            margin-top: 25px; 
+        }
+        .progress-dot { 
+            width: 10px; 
+            height: 10px; 
+            border-radius: 50%; 
+            background-color: #cbd5e1; 
+            transition: background-color 0.3s;
+        }
+        .progress-dot.active { background-color: #10b981; box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);}
+        .progress-icon { width: 20px; height: 20px; fill: #64748b; margin-right: 8px;}
+
+        /* Timer Bar */
+        .timer-bar-container { 
+            width: 100%; 
+            height: 8px; 
+            background: #e2e8f0; 
+            border-radius: 4px; 
+            margin-top: 20px; 
+            overflow: hidden; 
+            display: none; 
+        }
+        .timer-bar-fill { 
+            height: 100%; 
+            background: var(--accent); 
+            width: 100%; 
+            border-radius: 4px;
+        }
+
+        /* ==========================================
+           7. TABLES & LOADER
+           ========================================== */
+        .overview-table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin-top: 20px; 
+            background: white; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 1px solid #e2e8f0;
+        }
+        .overview-table th { background-color: var(--primary); color: white; padding: 15px; text-align: left; }
+        .overview-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; color: #475569;}
+        .overview-table tr:last-child td { border-bottom: none; }
+
+        #loader {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.98); z-index: 100;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner { 
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); 
+            border-radius: 50%; width: 50px; height: 50px; 
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* ==========================================
+           8. FINAL REPORT (VERSANT-STYLE SCORE CARD)
+           ========================================== */
+        .report-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 20px;
+            margin-bottom: 18px;
+        }
+        .report-meta { text-align: right; font-size: 13px; color: #475569; line-height: 1.8; }
+        .report-meta span { color: #94a3b8; margin-right: 4px; }
+
+        .report-student-row {
+            display: flex;
+            gap: 36px;
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 22px;
+            padding: 12px 18px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+        .report-student-row span { color: #94a3b8; margin-right: 4px; }
+
+        .score-panel {
+            display: flex;
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            padding: 28px;
+            gap: 30px;
+            margin-bottom: 24px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+        .score-panel-left { flex: 0 0 220px; display: flex; flex-direction: column; align-items: flex-start; }
+        .score-panel-label { font-size: 14px; font-weight: 700; color: #a3167e; margin-bottom: 6px; }
+        .score-big { font-size: 54px; font-weight: 700; color: #111827; line-height: 1; }
+        .gse-scale { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 16px; font-size: 12px; color: #94a3b8; }
+        .gse-track { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+        .gse-fill { height: 100%; background: #a3167e; border-radius: 4px; width: 0%; transition: width 0.8s ease; }
+        .cefr-badge { margin-top: 16px; font-size: 15px; font-weight: 700; color: #334155; }
+
+        .score-panel-divider { width: 1px; background: #e2e8f0; }
+        .score-panel-right { flex: 1; font-size: 14px; line-height: 1.7; color: #475569; display: flex; align-items: center; }
+
+        .cefr-chart {
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            padding: 26px 28px 22px;
+            margin-bottom: 24px;
+            background: white;
+        }
+        .cefr-header { display: grid; grid-template-columns: 110px repeat(10, 1fr); gap: 4px; margin-bottom: 16px; }
+        .cefr-header-cell { background: #f1f5f9; text-align: center; font-size: 11px; font-weight: 700; color: #64748b; padding: 7px 2px; border-radius: 6px; }
+        .cefr-header-cell.current { background: #f59e0b; color: white; }
+
+        .cefr-row { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 4px; margin-bottom: 12px; }
+        .cefr-row-label { background: #64748b; color: white; font-weight: 700; font-size: 13px; padding: 10px 12px; border-radius: 6px; }
+        .cefr-row-track { position: relative; height: 34px; background: #f1f5f9; border-radius: 6px; overflow: hidden; }
+        .cefr-row-fill {
+            position: absolute; top: 0; left: 0; height: 100%;
+            border-radius: 6px 0 0 6px;
+            display: flex; align-items: center; justify-content: flex-end;
+            padding-right: 10px; color: white; font-weight: 700; font-size: 14px;
+            transition: width 0.8s ease; width: 0%;
+        }
+        .fill-overall { background: #a3167e; }
+        .fill-speaking { background: #0e7490; }
+        .fill-listening { background: #3f7d3a; }
+
+        .gse-footnote { margin: 6px 0 0; font-size: 12px; color: #94a3b8; line-height: 1.6; }
+
+        /* ==========================================
+           9. RESPONSIVE ADJUSTMENTS
+           ========================================== */
+        @media (max-width: 720px) {
+            body { align-items: flex-start; }
+            .app-container { width: 100%; min-height: auto; border-radius: 0; }
+            .screen { padding: 22px; }
+            .header-title { font-size: 22px; }
+            #question-ui-box { flex-direction: column; }
+            .score-panel { flex-direction: column; }
+            .score-panel-divider { display: none; height: 1px; width: 100%; }
+            .score-panel-left { flex: none; width: 100%; }
+            .report-topbar { flex-direction: column; gap: 12px; }
+            .report-meta { text-align: left; }
+            .report-student-row { flex-direction: column; gap: 6px; }
+            .cefr-header { grid-template-columns: 64px repeat(10, minmax(22px, 1fr)); }
+            .cefr-row { grid-template-columns: 64px 1fr; }
+            .cefr-row-label { font-size: 11px; padding: 8px 6px; }
+            .cefr-header-cell { font-size: 9px; padding: 5px 1px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- LOADER -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <h2 style="color:#1a3668;">Loading Assessment Engine</h2>
+        <p id="loader-text" style="color: #64748b;">Downloading Local Speech Recognition Model...</p>
+    </div>
+
+    <!-- 0. STUDENT INFORMATION -->
+    <div id="screen-student" class="screen active-screen">
+        <div class="top-bar">
+            <div class="top-bar-titles">
+                <h1 class="header-title">Versant Simulation Test</h1>
+                <span class="header-tag">Unit 7A: Who's in control?</span>
+            </div>
+            <img src="https://raw.githubusercontent.com/jeffersondejesusarriola-collab/SectionF/main/logo.webp" alt="ETNS Logo" class="school-logo">
+        </div>
+
+        <div class="instruction-box">
+            <strong>Before you begin.</strong><br>
+            Please enter your information below. This will identify your official results on the final report.
+        </div>
+
+        <div class="test-ui-box" style="flex-direction: column; min-height: auto; gap: 18px;">
+            <div style="width: 100%;">
+                <label class="field-label" for="input-name">Full name <span style="color: var(--accent);">*</span></label>
+                <input type="text" id="input-name" class="field-input" placeholder="e.g. Maria Fernanda Lopez" autocomplete="name">
+            </div>
+            <div style="width: 100%; display: flex; gap: 18px;">
+                <div style="flex: 1;">
+                    <label class="field-label" for="input-group">Class / Group</label>
+                    <input type="text" id="input-group" class="field-input" placeholder="e.g. 10-A" autocomplete="off">
+                </div>
+                <div style="flex: 1;">
+                    <label class="field-label" for="input-id">Student ID (optional)</label>
+                    <input type="text" id="input-id" class="field-input" placeholder="e.g. 2026-0412" autocomplete="off">
+                </div>
+            </div>
+            <p id="student-status" style="font-size: 13px; color: #ef4444; font-style: italic; margin: 0; min-height: 16px;"></p>
+        </div>
+
+        <button class="btn" id="btn-student-continue">Continue</button>
+    </div>
+
+    <!-- 1. GENERAL INFORMATION -->
+    <div id="screen-general" class="screen">
+        <div class="top-bar">
+            <div class="top-bar-titles">
+                <h1 class="header-title">Versant Simulation Test</h1>
+                <span class="header-tag">Unit 7A: Who's in control?</span>
+            </div>
+            <img src="https://raw.githubusercontent.com/jeffersondejesusarriola-collab/SectionF/main/logo.webp" alt="ETNS Logo" class="school-logo">
+        </div>
+        
+        <div class="instruction-box">
+            <strong>Welcome to your simulation assessment.</strong><br>
+            Before we begin the language evaluation, we need to calibrate your microphone and ensure your local environment is ready for the test.
+        </div>
+        
+        <div class="test-ui-box" style="flex-direction: column; min-height: auto;">
+            <div class="test-label">Please state your full name clearly into the microphone to calibrate.</div>
+            <button class="btn" id="btn-calibrate" style="align-self: flex-start; margin: 0; background-color: #3b82f6;">Calibrate Microphone</button>
+            <p id="calibrate-status" style="font-size: 14px; color: #6b7280; font-style: italic; margin-top: 15px;"></p>
+        </div>
+
+        <button class="btn" id="btn-start-overview" disabled>Proceed to Overview</button>
+    </div>
+
+    <!-- 2. OVERVIEW SCREEN -->
+    <div id="screen-overview" class="screen">
+        <div class="top-bar">
+            <div class="top-bar-titles">
+                <h1 class="header-title">Versant Simulation Test</h1>
+                <span class="header-tag">Test Overview</span>
+            </div>
+            <img src="https://raw.githubusercontent.com/jeffersondejesusarriola-collab/SectionF/main/logo.webp" alt="ETNS Logo" class="school-logo">
+        </div>
+        
+        <div class="header-subtitle" style="text-align: center; font-size: 16px; font-weight: 600;">This test has multiple parts. In each part, you will perform a different task.</div>
+        
+        <table class="overview-table">
+            <thead>
+                <tr><th>Part</th><th>Task</th><th>Questions</th></tr>
+            </thead>
+            <tbody id="overview-tbody">
+                <!-- Injected via JS -->
+            </tbody>
+        </table>
+        
+        <button class="btn" onclick="startTestFlow()" style="margin-top: 30px;">Begin Test</button>
+    </div>
+
+    <!-- 3. SECTION INTRO SCREEN -->
+    <div id="screen-intro" class="screen">
+        <div class="top-bar">
+            <div class="top-bar-titles">
+                <h1 class="header-title" id="intro-title">Part X: Title</h1>
+                <span class="header-tag">Versant Simulation Test</span>
+            </div>
+            <img src="https://raw.githubusercontent.com/jeffersondejesusarriola-collab/SectionF/main/logo.webp" alt="ETNS Logo" class="school-logo">
+        </div>
+        
+        <div class="test-ui-box animate-question" style="flex-direction: column;" id="intro-ui-box">
+            <div class="test-label" style="font-size: 16px;">Listen to the instructions:</div>
+            <div class="interaction-area" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
+                <p id="intro-text" style="font-size: 16px; font-weight: 600; color: #334155; margin: 0;"></p>
+            </div>
+            
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <div class="test-col">
+                    <div class="test-label" style="font-size: 14px; color: #64748b;">When you hear,</div>
+                    <div class="interaction-area" id="intro-example-hear" style="min-height: 80px; font-size: 14px; color: #475569;"></div>
+                </div>
+                <div class="test-col">
+                    <div class="test-label" style="font-size: 14px; color: #64748b;">You say,</div>
+                    <div class="interaction-area" id="intro-example-say" style="min-height: 80px; font-size: 14px; color: #475569; font-style: italic; border-color: #93c5fd; background: #eff6ff;"></div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" onclick="startCurrentSection()">Start Section</button>
+    </div>
+
+    <!-- 4. QUESTION SCREEN -->
+    <div id="screen-question" class="screen">
+        <div class="top-bar">
+            <div class="top-bar-titles">
+                <h1 class="header-title" id="q-title">Part X: Title</h1>
+                <span class="header-tag" id="q-subtitle">Listen to a question. Answer the question.</span>
+            </div>
+            <img src="https://raw.githubusercontent.com/jeffersondejesusarriola-collab/SectionF/main/logo.webp" alt="ETNS Logo" class="school-logo">
+        </div>
+        
+        <div style="font-weight: 700; color: #64748b; margin-bottom: 15px; font-size: 14px;" id="q-counter">Question 1 of N</div>
+        
+        <div class="test-ui-box animate-question" id="question-ui-box">
+            <!-- Listen Column -->
+            <div class="test-col">
+                <div class="test-label">Listen.</div>
+                <div class="interaction-area" id="box-listen">
+                    <!-- Headset SVG -->
+                    <svg class="icon-large" id="icon-headset" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7c0-4.97-4.03-9-9-9z"/></svg>
+                    <div id="listen-status" style="margin-top: 15px; font-size: 14px; color: #64748b; font-weight: 600;">Preparing audio...</div>
+                </div>
+            </div>
+            
+            <!-- Answer Column -->
+            <div class="test-col">
+                <div class="test-label">Answer the question.</div>
+                <div class="interaction-area" id="box-answer">
+                    <!-- Mic SVG -->
+                    <svg class="icon-large" id="icon-mic" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                    <div id="answer-status" style="margin-top: 15px; font-size: 14px; color: #64748b; font-weight: 600;">Waiting...</div>
+                    <div class="timer-bar-container" id="timer-container"><div class="timer-bar-fill" id="timer-fill"></div></div>
+                    <button class="btn-next-question" id="btn-skip">Done? Next question →</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progress-dots">
+            <svg class="progress-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7c0-4.97-4.03-9-9-9z"/></svg>
+            <!-- Dots injected dynamically -->
+        </div>
+    </div>
+
+    <!-- 5. FINAL REPORT SCREEN -->
+    <div id="screen-report" class="screen" style="overflow-y: auto;">
+        <div class="report-topbar">
+            <div class="top-bar-titles">
+                <h1 class="header-title" style="font-size: 26px;">English Speaking and Listening Test</h1>
+                <span class="header-tag">Simulation Results Report</span>
+            </div>
+            <div class="report-meta">
+                <div><span>Test Completion Date:</span> <strong id="rep-date">--</strong></div>
+                <div><span>Test ID (TIN):</span> <strong id="rep-testid">--</strong></div>
+            </div>
+        </div>
+
+        <div class="report-student-row">
+            <div><span>Student:</span> <strong id="rep-student-name">--</strong></div>
+            <div><span>Group:</span> <strong id="rep-student-group">--</strong></div>
+        </div>
+
+        <div class="score-panel">
+            <div class="score-panel-left">
+                <div class="score-panel-label">Overall GSE Score</div>
+                <div class="score-big" id="rep-gse">--</div>
+                <div class="gse-scale">
+                    <span>10</span>
+                    <div class="gse-track"><div class="gse-fill" id="rep-gse-fill"></div></div>
+                    <span>90</span>
+                </div>
+                <div class="cefr-badge" id="rep-cefr">CEFR: --</div>
+            </div>
+            <div class="score-panel-divider"></div>
+            <div class="score-panel-right" id="rep-description">--</div>
+        </div>
+
+        <div class="cefr-chart">
+            <div class="cefr-header" id="cefr-header-row"></div>
+            <div class="cefr-row">
+                <div class="cefr-row-label">Overall</div>
+                <div class="cefr-row-track"><div class="cefr-row-fill fill-overall" id="fill-overall"><span id="val-overall"></span></div></div>
+            </div>
+            <div class="cefr-row">
+                <div class="cefr-row-label">Speaking</div>
+                <div class="cefr-row-track"><div class="cefr-row-fill fill-speaking" id="fill-speaking"><span id="val-speaking"></span></div></div>
+            </div>
+            <div class="cefr-row">
+                <div class="cefr-row-label">Listening</div>
+                <div class="cefr-row-track"><div class="cefr-row-fill fill-listening" id="fill-listening"><span id="val-listening"></span></div></div>
+            </div>
+            <p class="gse-footnote">Scores follow the Global Scale of English (GSE), a continuous 10–90 scale used alongside the CEFR to describe language ability in finer detail.</p>
+        </div>
+
+        <div class="instruction-box" style="border-left-color: #10b981; background: #ecfdf5;">
+            <strong style="color: #065f46;">Rubric Evaluation & Feedback</strong>
+            <ul style="margin-top: 8px; padding-left: 20px; font-size: 14px; color: #064e3b;" id="rubric-feedback"></ul>
+        </div>
+
+        <button class="btn" onclick="location.reload()" style="background-color: #10b981;">Return to Start</button>
+    </div>
+
+</div>
+
+<script type="module">
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+    env.allowLocalModels = false;
+
+    // ==========================================
+    // 1. DATA CONFIGURATION
+    // ==========================================
+    const testSections = [
+        {
+            id: 'A', name: 'Part A: Short Answer', task: 'Give a short answer to the question',
+            instructions: 'Listen to a question. Answer the question with one word or a few words.',
+            exampleHear: 'What is the opposite of up?', exampleSay: 'Down.',
+            timerSeconds: 15,
+            questions: [
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/00_Chapter_1.mp3', exp: ['change'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/01_Chapter_2.mp3', exp: ['waiter', 'waitress'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/02_Chapter_3.mp3', exp: ['a bag', 'plastic bag', 'paper bag', 'bag'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/03_Chapter_4.mp3', exp: ['closet', 'wardrobe'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/04_Chapter_5.mp3', exp: ['a babysitter', 'babysitter'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/05_Chapter_6.mp3', exp: ['salary', 'income'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/06_Chapter_7.mp3', exp: ['translation'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/07_Chapter_8.mp3', exp: ['a lawyer', 'lawyer'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/08_Chapter_9.mp3', exp: ['debt'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/09_Chapter_10.mp3', exp: ['an airport', 'airport'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/10_Chapter_11.mp3', exp: ['a clock', 'a watch', 'clock', 'watch'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-A-Questions/raw/refs/heads/main/11_Chapter_12.mp3', exp: ['Bill'] }
+            ]
+        },
+        {
+            id: 'B', name: 'Part B: Repeat', task: 'Repeat the sentence',
+            instructions: 'Listen and repeat the sentence as accurately as possible. You will have 15 seconds.',
+            exampleHear: 'Please leave a message after the beep.', exampleSay: 'Please leave a message after the beep.',
+            timerSeconds: 15,
+            questions: [
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-B-repeat/raw/refs/heads/main/1st.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-B-repeat/raw/refs/heads/main/2nd.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-B-repeat/raw/refs/heads/main/3rd.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-B-repeat/raw/refs/heads/main/4th.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-B-repeat/raw/refs/heads/main/5th.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-B-repeat/raw/refs/heads/main/6th.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/Section-B-repeat/raw/refs/heads/main/7th.mp3', exp: [''] }
+            ]
+        },
+        {
+            id: 'C', name: 'Part C: Conversations', task: 'Answer a question about a conversation',
+            instructions: 'Listen to a conversation between two people, followed by a question. Give a short, simple answer.',
+            exampleHear: 'Lucy, come early. Sure, 7:30? Great. Q: What time will Lucy go?', exampleSay: 'At 7:30.',
+            timerSeconds: 15,
+            questions: [
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/01_Chapter%201.mp3', exp: ['two more hours', 'two hours', 'about two more hours', '2 hours'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/02_Chapter%202.mp3', exp: ['a headache', 'he has a headache', 'headache'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/03_Chapter%203.mp3', exp: ['to the office', 'the office', 'office'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/04_Chapter%204.mp3', exp: ['math', 'she is studying math'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/05_Chapter%205.mp3', exp: ['8 am', '8:00 am', '8 in the morning', '8am', 'eight'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/06_Chapter%206.mp3', exp: ['45 dollars', '$45', 'fourty five dollars', 'forty five dollars', '45', 'forty-five'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/07_Chapter%207.mp3', exp: ['her daughter', 'daughter'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/08_Chapter%208.mp3', exp: ['this week', 'week'] },
+                { audio: 'https://github.com/jeffersonkuteacher/practice-for-versant-test-and-conversations/raw/refs/heads/main/09_Chapter%209.mp3', exp: ['so sad', 'sad', 'very sad'] }
+            ]
+        },
+        {
+            id: 'D', name: 'Part D: Passages', task: 'Answer questions about a passage',
+            instructions: 'Listen to a short story. Then, you will be asked 3 questions about it. Answer each in 15 seconds.',
+            exampleHear: '[Story plays] Q: Where did he go?', exampleSay: 'To the bank.',
+            timerSeconds: 15,
+            isStoryBased: true,
+            questions: [
+                { preAudio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/00_Story.mp3', audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/01_Question_1.mp3', exp: ['To a job interview', 'job interview'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/02_Question_2.mp3', exp: ['By taxi', 'taxi'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/03_Question_3.mp3', exp: ['In his backpack', 'backpack'] },
+                { preAudio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/04_Story_2.mp3', audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/05_Question_2_1.mp3', exp: ['To the grocery store', 'grocery store'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/06_Question_2_2.mp3', exp: ['Because it started raining', 'raining', 'started raining'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/07_Question_2_3.mp3', exp: ['A hot cup of tea', 'cup of tea', 'tea'] },
+                { preAudio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/08_Story_3.mp3', audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/09_Question_3_1.mp3', exp: ['To the downtown library', 'library', 'downtown library'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/10_Question_3_2.mp3', exp: ['Twenty minutes', '20 minutes'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/11_Question_3_3.mp3', exp: ['He got off at the next stop', 'got off', 'next stop'] },
+                { preAudio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/12_Story_4.mp3', audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/13_Question_4_1.mp3', exp: ['Her flash drive', 'flash drive'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/14_Question_4_2.mp3', exp: ['Fifteen minutes', '15 minutes'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/sectionD/raw/refs/heads/main/15_Question_4_3.mp3', exp: ['Her roommate', 'roommate'] }
+            ]
+        },
+        {
+            id: 'E', name: 'Part E: Retell', task: 'Retell a passage',
+            instructions: 'You will listen to a story. Then, retell the passage in your own words. You have 30 seconds.',
+            exampleHear: '[Story plays]', exampleSay: '[Retell in own words]',
+            timerSeconds: 30,
+            questions: [
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionE/raw/refs/heads/main/Diego.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionE/raw/refs/heads/main/Laura.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionE/raw/refs/heads/main/Marcos.mp3', exp: [''] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionE/raw/refs/heads/main/Sofia.mp3', exp: [''] }
+            ]
+        },
+        {
+            id: 'F', name: 'Part F: Opinion', task: 'Give your opinion',
+            instructions: 'You will be asked a question. Answer with your own words what you think about the question.',
+            exampleHear: 'Do you prefer coffee or tea?', exampleSay: 'I prefer coffee because...',
+            timerSeconds: 30,
+            questions: [
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionF/raw/refs/heads/main/00_Chapter_1.mp3', exp: ['flexibility', 'commute', 'office', 'home'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionF/raw/refs/heads/main/01_Chapter_2.mp3', exp: ['online', 'store', 'convenience', 'physical'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionF/raw/refs/heads/main/02_Chapter_3.mp3', exp: ['airplane', 'train', 'speed', 'luggage'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionF/raw/refs/heads/main/03_Chapter_4.mp3', exp: ['city', 'town', 'transport', 'quiet'] },
+                { audio: 'https://github.com/jeffersondejesusarriola-collab/SectionF/raw/refs/heads/main/04_Chapter_5.mp3', exp: ['book', 'e-book', 'screen', 'tactile'] }
+            ]
+        }
+    ];
+
+    // ==========================================
+    // 2. GLOBAL STATE
+    // ==========================================
+    let state = {
+        sectionIdx: 0,
+        questionIdx: 0,
+        results: [],
+        studentName: '',
+        studentGroup: '',
+        studentId: '',
+        testId: ''
+    };
+    let transcriber = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let activeAudio = null;
+    let recordTimeout = null;
+    let recorderMimeType = 'audio/webm';
+
+    window.startTestFlow = startTestFlow;
+    window.startCurrentSection = startCurrentSection;
+
+    // ==========================================
+    // 3. INITIALIZATION
+    // ==========================================
+
+    // 3.0 Student information gate (feeds the final report header)
+    document.getElementById('btn-student-continue').addEventListener('click', () => {
+        const name = document.getElementById('input-name').value.trim();
+        const group = document.getElementById('input-group').value.trim();
+        const sid = document.getElementById('input-id').value.trim();
+        const statusEl = document.getElementById('student-status');
+
+        if (!name) {
+            statusEl.innerText = "Please enter your full name to continue.";
+            return;
+        }
+        statusEl.innerText = "";
+        state.studentName = name;
+        state.studentGroup = group || '—';
+        state.studentId = sid;
+        state.testId = String(Math.floor(10000000 + Math.random() * 89999999));
+        switchScreen('screen-general');
+    });
+
+    document.getElementById('btn-calibrate').addEventListener('click', async () => {
+        const statusEl = document.getElementById('calibrate-status');
+
+        // Feature detection first: on an unsupported browser, getUserMedia below
+        // would throw a generic TypeError that looks like a permissions problem.
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            statusEl.innerText = "Error: this browser doesn't support microphone recording. Please use a recent version of Chrome, Edge, or Firefox.";
+            statusEl.style.color = "#ef4444";
+            return;
+        }
+        if (typeof window.MediaRecorder === 'undefined') {
+            statusEl.innerText = "Error: this browser doesn't support audio recording (MediaRecorder unavailable).";
+            statusEl.style.color = "#ef4444";
+            return;
+        }
+
+        try {
+            statusEl.innerText = "Requesting permission...";
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            statusEl.innerText = "Microphone ready. Loading AI engine...";
+
+            document.getElementById('loader').style.display = 'flex';
+            const loaderText = document.getElementById('loader-text');
+            transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+                progress_callback: (data) => {
+                    if (data.status === 'progress' && typeof data.progress === 'number') {
+                        loaderText.innerText = `Downloading speech recognition model... ${Math.round(data.progress)}%`;
+                    } else if (data.status === 'ready') {
+                        loaderText.innerText = 'Finishing setup...';
+                    }
+                }
+            });
+
+            document.getElementById('loader').style.display = 'none';
+            statusEl.innerText = "AI engine loaded successfully.";
+            statusEl.style.color = "#10b981";
+            document.getElementById('btn-calibrate').style.display = 'none';
+            document.getElementById('btn-start-overview').disabled = false;
+        } catch (e) {
+            document.getElementById('loader').style.display = 'none';
+            console.error("Calibration error:", e);
+            if (e && e.name === 'NotAllowedError') {
+                statusEl.innerText = "Error: microphone permission was denied. Please allow microphone access and try again.";
+            } else if (e && e.name === 'NotFoundError') {
+                statusEl.innerText = "Error: no microphone was found on this device.";
+            } else {
+                statusEl.innerText = "Error: could not load the speech recognition engine. Check your internet connection and try again.";
+            }
+            statusEl.style.color = "#ef4444";
+        }
+    });
+
+    document.getElementById('btn-start-overview').addEventListener('click', () => {
+        switchScreen('screen-overview');
+        const tbody = document.getElementById('overview-tbody');
+        testSections.forEach(sec => {
+            tbody.innerHTML += `<tr><td>${sec.id}</td><td>${sec.task}</td><td>${sec.questions.length}</td></tr>`;
+        });
+    });
+
+    function switchScreen(id) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active-screen'));
+        document.getElementById(id).classList.add('active-screen');
+    }
+
+    // ==========================================
+    // 4. TEST FLOW LOGIC
+    // ==========================================
+    function startTestFlow() {
+        state.sectionIdx = 0;
+        state.questionIdx = 0;
+        state.results = [];
+        loadSectionIntro();
+    }
+
+    function loadSectionIntro() {
+        if (state.sectionIdx >= testSections.length) {
+            generateFinalReport();
+            return;
+        }
+        const sec = testSections[state.sectionIdx];
+        document.getElementById('intro-title').innerText = sec.name;
+        document.getElementById('intro-text').innerText = sec.instructions;
+        document.getElementById('intro-example-hear').innerText = sec.exampleHear;
+        document.getElementById('intro-example-say').innerText = sec.exampleSay;
+        
+        const uiBox = document.getElementById('intro-ui-box');
+        uiBox.classList.remove('animate-question');
+        void uiBox.offsetWidth;
+        uiBox.classList.add('animate-question');
+
+        switchScreen('screen-intro');
+    }
+
+    function startCurrentSection() {
+        switchScreen('screen-question');
+        playQuestion();
+    }
+
+    async function playQuestion() {
+        const sec = testSections[state.sectionIdx];
+        const q = sec.questions[state.questionIdx];
+        
+        document.getElementById('q-title').innerText = sec.name;
+        document.getElementById('q-subtitle').innerText = sec.instructions;
+        document.getElementById('q-counter').innerText = `Question ${state.questionIdx + 1} of ${sec.questions.length}`;
+        
+        const uiBox = document.getElementById('question-ui-box');
+        uiBox.classList.remove('animate-question');
+        void uiBox.offsetWidth;
+        uiBox.classList.add('animate-question');
+
+        setupProgressDots(sec.questions.length, state.questionIdx);
+        setUIState('listen', 'Playing...');
+        
+        if (q.preAudio) {
+            setUIState('listen', 'Playing passage...');
+            await playAudioAndWait(q.preAudio);
+        }
+
+        setUIState('listen', 'Playing question...');
+        await playAudioAndWait(q.audio);
+
+        startRecordingPhase(sec.timerSeconds, q);
+    }
+
+    function playAudioAndWait(url) {
+        return new Promise((resolve) => {
+            activeAudio = new Audio(url);
+            activeAudio.onended = resolve;
+            activeAudio.onerror = resolve; 
+            activeAudio.play().catch(e => { console.error(e); resolve(); });
+        });
+    }
+
+    // Pick a mimeType the running browser actually supports, instead of assuming
+    // 'audio/webm' works everywhere (Safari, for example, does not support it).
+    function pickSupportedMimeType() {
+        const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+            for (const type of candidates) {
+                if (MediaRecorder.isTypeSupported(type)) return type;
+            }
+        }
+        return ''; // let the browser pick its own default
+    }
+
+    async function startRecordingPhase(seconds, qData) {
+        setUIState('record', `Recording... (${seconds}s)`);
+        
+        const barContainer = document.getElementById('timer-container');
+        const barFill = document.getElementById('timer-fill');
+        barContainer.style.display = 'block';
+        barFill.style.transition = 'none';
+        barFill.style.width = '100%';
+        
+        setTimeout(() => {
+            barFill.style.transition = `width ${seconds}s linear`;
+            barFill.style.width = '0%';
+        }, 50);
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mimeType = pickSupportedMimeType();
+            mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+            recorderMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = () => processAnswerAndAdvance(stream, qData);
+            
+            mediaRecorder.start();
+            recordTimeout = setTimeout(() => {
+                if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+            }, seconds * 1000);
+            
+        } catch (e) {
+            console.error("Recording error", e);
+            advanceToNext();
+        }
+    }
+
+    // Lets a student move on immediately when they finish answering before
+    // the countdown ends, instead of waiting out the full timer.
+    function skipCurrentRecording() {
+        const skipBtn = document.getElementById('btn-skip');
+        if (skipBtn.disabled) return;
+        skipBtn.disabled = true;
+        clearTimeout(recordTimeout);
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+    }
+    document.getElementById('btn-skip').addEventListener('click', skipCurrentRecording);
+
+    async function processAnswerAndAdvance(stream, qData) {
+        stream.getTracks().forEach(t => t.stop());
+        setUIState('processing', 'Processing response...');
+        
+        const audioBlob = new Blob(audioChunks, { type: recorderMimeType || 'audio/webm' });
+        
+        let transcript = "";
+        try {
+            if (transcriber) {
+                const output = await transcriber(URL.createObjectURL(audioBlob));
+                transcript = output.text.trim();
+            }
+        } catch(e) { console.error("Whisper transcription error", e); }
+
+        state.results.push({
+            section: testSections[state.sectionIdx].id,
+            qIndex: state.questionIdx,
+            transcript: transcript,
+            expected: qData.exp
+        });
+
+        advanceToNext();
+    }
+
+    function advanceToNext() {
+        document.getElementById('timer-container').style.display = 'none';
+        document.getElementById('btn-skip').style.display = 'none';
+        
+        const sec = testSections[state.sectionIdx];
+        state.questionIdx++;
+        
+        if (state.questionIdx >= sec.questions.length) {
+            state.sectionIdx++;
+            state.questionIdx = 0;
+            loadSectionIntro(); 
+        } else {
+            playQuestion(); 
+        }
+    }
+
+    // ==========================================
+    // 5. UI HELPERS
+    // ==========================================
+    function setUIState(phase, msg) {
+        const hIcon = document.getElementById('icon-headset');
+        const mIcon = document.getElementById('icon-mic');
+        const lStat = document.getElementById('listen-status');
+        const aStat = document.getElementById('answer-status');
+        const skipBtn = document.getElementById('btn-skip');
+
+        hIcon.classList.remove('icon-active-listen');
+        mIcon.classList.remove('icon-active-record');
+
+        if (phase === 'listen') {
+            hIcon.classList.add('icon-active-listen');
+            lStat.innerText = msg;
+            lStat.style.color = "var(--secondary)";
+            aStat.innerText = "Waiting...";
+            aStat.style.color = "var(--text-muted)";
+            skipBtn.style.display = 'none';
+        } else if (phase === 'record') {
+            mIcon.classList.add('icon-active-record');
+            lStat.innerText = "Done.";
+            lStat.style.color = "var(--text-muted)";
+            aStat.innerText = msg;
+            aStat.style.color = "var(--accent)";
+            skipBtn.style.display = 'inline-block';
+            skipBtn.disabled = false;
+        } else if (phase === 'processing') {
+            lStat.innerText = "Done.";
+            aStat.innerText = msg;
+            aStat.style.color = "#10b981";
+            skipBtn.style.display = 'none';
+        }
+    }
+
+    function setupProgressDots(total, current) {
+        const container = document.getElementById('progress-dots');
+        let html = `<svg class="progress-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7c0-4.97-4.03-9-9-9z"/></svg>`;
+        for(let i=0; i<total; i++) {
+            html += `<div class="progress-dot ${i <= current ? 'active' : ''}"></div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    // ==========================================
+    // 6. EVALUATION ENGINE (NLP & GSE)
+    // ==========================================
+
+    // GSE 10-90 scale split into the 10 standard CEFR sub-bands, each with an
+    // original short performance descriptor (not copied from any vendor report).
+    const CEFR_BANDS = [
+        { label: '<A1', min: 10, max: 21, description: "At this level, English use is limited to isolated words and memorized phrases on very familiar topics, with long pauses and frequent misunderstandings." },
+        { label: 'A1',  min: 22, max: 29, description: "The student handles very basic, predictable exchanges, relying on simple vocabulary and short, often incomplete sentences." },
+        { label: 'A2',  min: 30, max: 35, description: "The student manages short, everyday exchanges on familiar topics, though sentences stay simple and vocabulary is limited outside routine situations." },
+        { label: 'A2+', min: 36, max: 42, description: "The student communicates in familiar, predictable situations with a wider range of everyday vocabulary, though pauses and simplification are still noticeable." },
+        { label: 'B1',  min: 43, max: 50, description: "The student speaks and understands with some effort on familiar subjects, but may struggle with faster speech or more complex topics. Speech is fairly fluent, though not fully elaborate, with fair pronunciation." },
+        { label: 'B1+', min: 51, max: 58, description: "The student sustains familiar conversations with reasonable ease, using a broader vocabulary and mostly appropriate grammar, with occasional gaps on less familiar topics." },
+        { label: 'B2',  min: 59, max: 65, description: "The student communicates fairly fluently and spontaneously on a range of topics, with generally accurate grammar and clear pronunciation, though some errors remain under pressure." },
+        { label: 'B2+', min: 66, max: 75, description: "The student expresses ideas clearly and with good control across most everyday and some abstract topics, showing solid range and flexibility." },
+        { label: 'C1',  min: 76, max: 84, description: "The student expresses ideas fluently and precisely, with strong control of grammar and vocabulary, handling complex topics with only minor, unobtrusive errors." },
+        { label: 'C2',  min: 85, max: 90, description: "The student communicates with near-native fluency, precision, and flexibility across almost any topic, with grammar and vocabulary errors that are rare and minor." }
+    ];
+
+    function getBand(gse) {
+        for (const band of CEFR_BANDS) {
+            if (gse >= band.min && gse <= band.max) return band;
+        }
+        return gse < 10 ? CEFR_BANDS[0] : CEFR_BANDS[CEFR_BANDS.length - 1];
+    }
+
+    function generateFinalReport() {
+        switchScreen('screen-report');
+        
+        let listeningScore = 0;
+        let speakingScore = 0;
+        let lCount = 0;
+        let sCount = 0;
+        
+        let secFWordCount = 0;
+        let secFKeywordsFound = 0;
+
+        state.results.forEach(res => {
+            const textLower = res.transcript.toLowerCase();
+            const expLower = res.expected.map(e => e.toLowerCase());
+            
+            let itemScore = 0;
+
+            if (res.section === 'A' || res.section === 'C' || res.section === 'D') {
+                const isCorrect = expLower.some(e => textLower.includes(e));
+                itemScore = isCorrect ? 100 : 0;
+                listeningScore += itemScore; lCount++;
+                speakingScore += itemScore > 0 ? 100 : 50; sCount++; 
+            } 
+            else if (res.section === 'B' || res.section === 'E') {
+                const words = textLower.split(/\s+/).filter(w => w.length > 0).length;
+                itemScore = Math.min((words / (res.section === 'E' ? 30 : 8)) * 100, 100);
+                speakingScore += itemScore; sCount++;
+                if (res.section === 'B') { listeningScore += itemScore; lCount++; }
+            }
+            else if (res.section === 'F') {
+                const words = textLower.split(/\s+/).filter(w => w.length > 0).length;
+                secFWordCount += words;
+                
+                let matches = 0;
+                expLower.forEach(k => { if(textLower.includes(k)) matches++; });
+                secFKeywordsFound += matches;
+
+                itemScore = Math.min((words / 40) * 100, 100); 
+                speakingScore += itemScore; sCount++;
+            }
+        });
+
+        const finalList = lCount > 0 ? Math.round(listeningScore / lCount) : 0;
+        const finalSpeak = sCount > 0 ? Math.round(speakingScore / sCount) : 0;
+
+        // Map each percentage onto the 10-90 GSE scale, then derive the overall
+        // score as the average of the two skills (mirrors how GSE score reports
+        // typically combine a Speaking and a Listening sub-score).
+        const toGSE = (pct) => Math.min(90, Math.max(10, Math.round(10 + (pct / 100) * 80)));
+        const gseListening = toGSE(finalList);
+        const gseSpeaking = toGSE(finalSpeak);
+        const gseOverall = Math.round((gseListening + gseSpeaking) / 2);
+
+        const band = getBand(gseOverall);
+
+        // --- Header: student identity, date, test ID ---
+        document.getElementById('rep-student-name').innerText = state.studentName || '—';
+        document.getElementById('rep-student-group').innerText = state.studentGroup || '—';
+        document.getElementById('rep-date').innerText = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+        document.getElementById('rep-testid').innerText = state.testId || '—';
+
+        // --- Overall score panel ---
+        document.getElementById('rep-gse').innerText = gseOverall;
+        document.getElementById('rep-gse-fill').style.width = ((gseOverall - 10) / 80 * 100) + '%';
+        document.getElementById('rep-cefr').innerText = 'CEFR: ' + band.label;
+        document.getElementById('rep-description').innerText = band.description;
+
+        // --- CEFR band header row (highlights the achieved band) ---
+        const headerRow = document.getElementById('cefr-header-row');
+        let headerHtml = `<div></div>`;
+        CEFR_BANDS.forEach(b => {
+            headerHtml += `<div class="cefr-header-cell ${b.label === band.label ? 'current' : ''}">${b.label}</div>`;
+        });
+        headerRow.innerHTML = headerHtml;
+
+        // --- Overall / Speaking / Listening bars on the same 10-90 scale ---
+        const setBar = (fillId, valId, score) => {
+            document.getElementById(fillId).style.width = ((score - 10) / 80 * 100) + '%';
+            document.getElementById(valId).innerText = score;
+        };
+        setBar('fill-overall', 'val-overall', gseOverall);
+        setBar('fill-speaking', 'val-speaking', gseSpeaking);
+        setBar('fill-listening', 'val-listening', gseListening);
+
+        // --- Rubric feedback ---
+        const fbUl = document.getElementById('rubric-feedback');
+        fbUl.innerHTML = `
+            <li><strong>Task completion:</strong> Keywords detected across opinion tasks: ${secFKeywordsFound}.</li>
+            <li><strong>Fluency (proxy):</strong> Average words generated in 30-second tasks: ${Math.round(secFWordCount/5)}.</li>
+            <li><strong>Note:</strong> This is a classroom simulation. Scores approximate spoken performance from keyword matching and speech rate — they are not an official Versant or GSE certification.</li>
+        `;
+    }
+</script>
+</body>
+</html>
